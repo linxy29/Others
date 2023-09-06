@@ -13,21 +13,25 @@ def check_slots():
     html_text = bytes.decode(html.read())
     soup = BeautifulSoup(html_text, 'html.parser')
     b_active_section = soup.find('div', {'id': 'c10002Content'})
-    slots = b_active_section.find_all('div', class_='border-top border-light font-size-list')
+    slot_sections = b_active_section.find_all('div', class_='py-2 text-center grey lighten-2 font-size-list')
     
-    available_slots = []
-    for slot in slots:
-        time_div = slot.find('div', class_='col text-center')
-        availability_div = time_div.find_next_sibling('div')
-        if "FULL" not in availability_div.get_text():
-            available_slots.append(time_div.get_text())
+    available_slots_with_dates = []
 
-    if available_slots:
+    for section in slot_sections:
+        date = section.get_text(strip=True)
+        next_siblings = section.find_next_siblings('div', class_='border-top border-light font-size-list', limit=3)
+        for slot in next_siblings:
+            time_div = slot.find('div', class_='col text-center')
+            availability_div = time_div.find_next_sibling('div')
+            if "FULL" not in availability_div.get_text():
+                available_slots_with_dates.append(f"{date} - {time_div.get_text()}")
+
+    if available_slots_with_dates:
         # Prepare the email
         sender_email = "forsdemail@163.com"
         recipient_email = "xl2836@outlook.com"
         subject = "Available Slots in HKU B-Active"
-        body = f"Available slots: {', '.join(available_slots)}"
+        body = "Available slots:\n" + '\n'.join(available_slots_with_dates)
 
         msg = MIMEText(body)
         msg['From'] = sender_email
